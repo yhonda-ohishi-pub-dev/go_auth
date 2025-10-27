@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/yhonda-ohishi/go_auth/pkg/authclient"
@@ -22,6 +23,9 @@ func main() {
 		clientID     = flag.String("client-id", "testclient", "Client ID")
 		maxRetries   = flag.Int("retries", 0, "Maximum number of retries")
 		retryBackoff = flag.Duration("retry-backoff", 2*time.Second, "Retry backoff duration")
+		saveEnv      = flag.Bool("save-env", false, "Save secrets to .env file")
+		envFile      = flag.String("env-file", ".env", "Path to .env file")
+		secretKeys   = flag.String("secret-keys", "", "Comma-separated list of secret keys to retrieve (empty for all)")
 	)
 
 	flag.Parse()
@@ -87,8 +91,28 @@ func main() {
 	fmt.Printf("Client ID: %s\n", *clientID)
 	fmt.Printf("Private key: %s\n", *privateFile)
 
+	// 秘密鍵を読み込み
+	privateKey, err := keygen.LoadPrivateKey(*privateFile)
+	if err != nil {
+		log.Fatalf("Failed to load private key: %v", err)
+	}
+
+	// SecretKeysをパース
+	var secretKeyList []string
+	if *secretKeys != "" {
+		for _, key := range strings.Split(*secretKeys, ",") {
+			secretKeyList = append(secretKeyList, strings.TrimSpace(key))
+		}
+		fmt.Printf("Secret keys filter: %v\n", secretKeyList)
+	}
+
 	// クライアント作成
-	client, err := authclient.NewClientFromFile(*baseURL, *clientID, *privateFile)
+	client, err := authclient.NewClient(authclient.ClientConfig{
+		BaseURL:    *baseURL,
+		ClientID:   *clientID,
+		PrivateKey: privateKey,
+		SecretKeys: secretKeyList,
+	})
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
@@ -121,5 +145,13 @@ func main() {
 	fmt.Println("\nSecret Data:")
 	for key, value := range resp.SecretData {
 		fmt.Printf("  %s: %s\n", key, value)
+	}
+
+	// .envファイルに保存
+	if *saveEnv {
+		if err := resp.SaveToEnvFile(*envFile); err != nil {
+			log.Fatalf("Failed to save .env file: %v", err)
+		}
+		fmt.Printf("\n✓ Secrets saved to: %s\n", *envFile)
 	}
 }

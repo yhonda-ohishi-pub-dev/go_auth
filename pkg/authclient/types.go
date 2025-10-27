@@ -22,6 +22,9 @@ type ClientConfig struct {
 
 	// Timeout はリクエストタイムアウト（デフォルト: 30秒）
 	Timeout time.Duration
+
+	// SecretKeys は取得したいSecret変数のキーのリスト（空の場合は全て取得）
+	SecretKeys []string
 }
 
 // ChallengeResponse はチャレンジエンドポイントからのレスポンス

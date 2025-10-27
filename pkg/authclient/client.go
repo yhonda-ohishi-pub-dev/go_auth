@@ -23,6 +23,7 @@ type Client struct {
 	timeout      time.Duration
 	maxRetries   int
 	retryBackoff time.Duration
+	secretKeys   []string
 }
 
 // NewClient は新しいクライアントを作成します
@@ -65,6 +66,7 @@ func NewClient(config ClientConfig) (*Client, error) {
 		timeout:      timeout,
 		maxRetries:   0, // デフォルトはリトライなし
 		retryBackoff: 2 * time.Second,
+		secretKeys:   config.SecretKeys,
 	}, nil
 }
 
@@ -250,6 +252,17 @@ func (c *Client) VerifySignature(challenge, signature string) (*VerifyResponse, 
 	// 認証失敗チェック
 	if !verifyResp.Success {
 		return nil, fmt.Errorf("%w: %s", ErrUnauthorized, verifyResp.Error)
+	}
+
+	// SecretKeysが指定されている場合、フィルタリング
+	if len(c.secretKeys) > 0 {
+		filteredData := make(map[string]string)
+		for _, key := range c.secretKeys {
+			if value, ok := verifyResp.SecretData[key]; ok {
+				filteredData[key] = value
+			}
+		}
+		verifyResp.SecretData = filteredData
 	}
 
 	return &verifyResp, nil
