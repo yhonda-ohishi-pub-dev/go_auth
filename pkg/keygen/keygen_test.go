@@ -178,7 +178,7 @@ func TestGenerateAndSaveKeyPair(t *testing.T) {
 	publicKeyFile := filepath.Join(tmpDir, "public.pem")
 
 	// 鍵ペアを生成して保存
-	if err := GenerateAndSaveKeyPair(privateKeyFile, publicKeyFile, 2048); err != nil {
+	if err := GenerateAndSaveKeyPair(privateKeyFile, publicKeyFile, "test-client", 2048); err != nil {
 		t.Errorf("GenerateAndSaveKeyPair() error = %v", err)
 		return
 	}

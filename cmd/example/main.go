@@ -19,7 +19,7 @@ func main() {
 		publicFile   = flag.String("public-key", "public.pem", "Path to public key file")
 		keyBits      = flag.Int("key-bits", 2048, "RSA key size (2048 or 4096)")
 		baseURL      = flag.String("url", "", "Cloudflare Worker base URL")
-		clientID     = flag.String("client-id", "", "Client ID")
+		clientID     = flag.String("client-id", "testclient", "Client ID")
 		maxRetries   = flag.Int("retries", 0, "Maximum number of retries")
 		retryBackoff = flag.Duration("retry-backoff", 2*time.Second, "Retry backoff duration")
 	)
@@ -28,13 +28,35 @@ func main() {
 
 	// 鍵生成モード
 	if *generateKeys {
+		// clientIDが必須
+		if *clientID == "" {
+			fmt.Println("Error: -client-id is required for key generation")
+			flag.Usage()
+			os.Exit(1)
+		}
+
 		fmt.Println("Generating RSA key pair...")
-		if err := keygen.GenerateAndSaveKeyPair(*privateFile, *publicFile, *keyBits); err != nil {
+
+		// 鍵ペアとCloudflare設定ファイルを生成
+		if err := keygen.GenerateAndSaveKeyPair(*privateFile, *publicFile, *clientID, *keyBits); err != nil {
 			log.Fatalf("Failed to generate key pair: %v", err)
 		}
 
 		fmt.Printf("✓ Private key saved to: %s\n", *privateFile)
 		fmt.Printf("✓ Public key saved to: %s\n", *publicFile)
+
+		// Cloudflare設定ファイルの内容を表示
+		configFile := *publicFile + ".cloudflare.json"
+		fmt.Printf("✓ Cloudflare config saved to: %s\n", configFile)
+
+		configContent, err := os.ReadFile(configFile)
+		if err != nil {
+			log.Fatalf("Failed to read config file: %v", err)
+		}
+
+		fmt.Println("\n--- Cloudflare Worker Configuration ---")
+		fmt.Println("Copy this JSON to your Cloudflare Worker's AUTHORIZED_CLIENTS variable:")
+		fmt.Println(string(configContent))
 
 		// 公開鍵を表示
 		publicPEM, err := os.ReadFile(*publicFile)
@@ -42,8 +64,7 @@ func main() {
 			log.Fatalf("Failed to read public key: %v", err)
 		}
 
-		fmt.Println("\n--- Public Key ---")
-		fmt.Println("Copy this public key and register it in your Cloudflare Worker:")
+		fmt.Println("\n--- Public Key (PEM format) ---")
 		fmt.Println(string(publicPEM))
 		return
 	}

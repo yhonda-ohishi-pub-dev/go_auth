@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var (
@@ -107,8 +108,8 @@ func SavePublicKey(filename string, publicKey *rsa.PublicKey) error {
 	return nil
 }
 
-// GenerateAndSaveKeyPair は鍵ペアを生成してファイルに保存します
-func GenerateAndSaveKeyPair(privateKeyFile, publicKeyFile string, bits int) error {
+// GenerateAndSaveKeyPair は鍵ペアを生成し、Cloudflare Worker設定用ファイルも作成します
+func GenerateAndSaveKeyPair(privateKeyFile, publicKeyFile, clientID string, bits int) error {
 	// 秘密鍵を生成
 	privateKey, err := GeneratePrivateKey(bits)
 	if err != nil {
@@ -123,6 +124,36 @@ func GenerateAndSaveKeyPair(privateKeyFile, publicKeyFile string, bits int) erro
 	// 公開鍵を保存
 	if err := SavePublicKey(publicKeyFile, &privateKey.PublicKey); err != nil {
 		return err
+	}
+
+	// Cloudflare Worker設定用ファイルを作成
+	configFile := publicKeyFile + ".cloudflare.json"
+	if err := SaveCloudflareConfig(configFile, clientID, &privateKey.PublicKey); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SaveCloudflareConfig はCloudflare Worker用のワンライナーJSON設定を保存します
+func SaveCloudflareConfig(filename, clientID string, publicKey *rsa.PublicKey) error {
+	// 公開鍵をPEM形式にエンコード
+	publicKeyPEM, err := EncodePublicKeyToPEM(publicKey)
+	if err != nil {
+		return err
+	}
+
+	// 改行を\nに置換してワンライナー化
+	pemStr := string(publicKeyPEM)
+	pemStr = strings.ReplaceAll(pemStr, "\n", "\\n")
+	pemStr = strings.TrimSuffix(pemStr, "\\n") // 末尾の余分な\nを削除
+
+	// JSON形式で保存
+	jsonStr := fmt.Sprintf(`{"%s":"%s"}`, clientID, pemStr)
+
+	// ファイルに保存
+	if err := os.WriteFile(filename, []byte(jsonStr), 0644); err != nil {
+		return fmt.Errorf("failed to write cloudflare config file: %w", err)
 	}
 
 	return nil
