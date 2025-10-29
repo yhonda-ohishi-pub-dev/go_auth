@@ -24,6 +24,8 @@ type Client struct {
 	maxRetries   int
 	retryBackoff time.Duration
 	secretKeys   []string
+	repoUrl      string
+	grpcEndpoint string
 }
 
 // NewClient は新しいクライアントを作成します
@@ -67,6 +69,8 @@ func NewClient(config ClientConfig) (*Client, error) {
 		maxRetries:   0, // デフォルトはリトライなし
 		retryBackoff: 2 * time.Second,
 		secretKeys:   config.SecretKeys,
+		repoUrl:      config.RepoUrl,
+		grpcEndpoint: config.GrpcEndpoint,
 	}, nil
 }
 
@@ -207,9 +211,11 @@ func (c *Client) VerifySignature(challenge, signature string) (*VerifyResponse, 
 
 	// リクエストボディを作成
 	reqBody := VerifyRequest{
-		ClientID:  c.clientID,
-		Challenge: challenge,
-		Signature: signature,
+		ClientID:     c.clientID,
+		Challenge:    challenge,
+		Signature:    signature,
+		RepoUrl:      c.repoUrl,
+		GrpcEndpoint: c.grpcEndpoint,
 	}
 
 	jsonData, err := json.Marshal(reqBody)

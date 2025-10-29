@@ -26,6 +26,8 @@ func main() {
 		saveEnv      = flag.Bool("save-env", false, "Save secrets to .env file")
 		envFile      = flag.String("env-file", ".env", "Path to .env file")
 		secretKeys   = flag.String("secret-keys", "", "Comma-separated list of secret keys to retrieve (empty for all)")
+		repoUrl      = flag.String("repo-url", "", "GitHub repository URL (optional)")
+		grpcEndpoint = flag.String("grpc-endpoint", "", "gRPC endpoint URL (optional)")
 	)
 
 	flag.Parse()
@@ -90,6 +92,12 @@ func main() {
 	fmt.Printf("Authenticating to: %s\n", *baseURL)
 	fmt.Printf("Client ID: %s\n", *clientID)
 	fmt.Printf("Private key: %s\n", *privateFile)
+	if *repoUrl != "" {
+		fmt.Printf("Repository URL: %s\n", *repoUrl)
+	}
+	if *grpcEndpoint != "" {
+		fmt.Printf("gRPC Endpoint: %s\n", *grpcEndpoint)
+	}
 
 	// 秘密鍵を読み込み
 	privateKey, err := keygen.LoadPrivateKey(*privateFile)
@@ -108,10 +116,12 @@ func main() {
 
 	// クライアント作成
 	client, err := authclient.NewClient(authclient.ClientConfig{
-		BaseURL:    *baseURL,
-		ClientID:   *clientID,
-		PrivateKey: privateKey,
-		SecretKeys: secretKeyList,
+		BaseURL:      *baseURL,
+		ClientID:     *clientID,
+		PrivateKey:   privateKey,
+		SecretKeys:   secretKeyList,
+		RepoUrl:      *repoUrl,
+		GrpcEndpoint: *grpcEndpoint,
 	})
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)

@@ -25,6 +25,12 @@ type ClientConfig struct {
 
 	// SecretKeys は取得したいSecret変数のキーのリスト（空の場合は全て取得）
 	SecretKeys []string
+
+	// RepoUrl はGitHubリポジトリのURL（オプション）
+	RepoUrl string
+
+	// GrpcEndpoint はgRPCエンドポイントのURL（オプション）
+	GrpcEndpoint string
 }
 
 // ChallengeResponse はチャレンジエンドポイントからのレスポンス
@@ -46,6 +52,12 @@ type VerifyRequest struct {
 
 	// Signature はBase64エンコードされた署名
 	Signature string `json:"signature"`
+
+	// RepoUrl はGitHubリポジトリのURL（オプション）
+	RepoUrl string `json:"repoUrl,omitempty"`
+
+	// GrpcEndpoint はgRPCエンドポイントのURL（オプション）
+	GrpcEndpoint string `json:"grpcEndpoint,omitempty"`
 }
 
 // VerifyResponse は署名検証エンドポイントからのレスポンス
