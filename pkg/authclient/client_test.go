@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	internalcrypto "github.com/yhonda-ohishi/go_auth/internal/crypto"
+	internalcrypto "github.com/yhonda-ohishi-pub-dev/go_auth/internal/crypto"
 )
 
 func setupTestServer(t *testing.T, privateKey *rsa.PrivateKey) *httptest.Server {

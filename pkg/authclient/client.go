@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yhonda-ohishi/go_auth/pkg/keygen"
+	"github.com/yhonda-ohishi-pub-dev/go_auth/pkg/keygen"
 )
 
 // Client はCloudflare Auth Workerに接続するクライアント

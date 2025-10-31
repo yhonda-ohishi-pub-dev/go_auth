@@ -16,7 +16,7 @@ RSA公開鍵認証を使用してCloudflare Workerに安全に接続し、Secret
 ## インストール
 
 ```bash
-go get github.com/yhonda-ohishi/go_auth
+go get github.com/yhonda-ohishi-pub-dev/go_auth
 ```
 
 ## クイックスタート
@@ -52,7 +52,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/yhonda-ohishi/go_auth/pkg/authclient"
+    "github.com/yhonda-ohishi-pub-dev/go_auth/pkg/authclient"
 )
 
 func main() {
@@ -98,7 +98,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/yhonda-ohishi/go_auth/pkg/keygen"
+    "github.com/yhonda-ohishi-pub-dev/go_auth/pkg/keygen"
 )
 
 func main() {

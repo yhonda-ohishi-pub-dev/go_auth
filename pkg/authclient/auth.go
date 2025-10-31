@@ -3,8 +3,8 @@ package authclient
 import (
 	"fmt"
 
-	"github.com/yhonda-ohishi/go_auth/internal/crypto"
-	"github.com/yhonda-ohishi/go_auth/pkg/keygen"
+	"github.com/yhonda-ohishi-pub-dev/go_auth/internal/crypto"
+	"github.com/yhonda-ohishi-pub-dev/go_auth/pkg/keygen"
 )
 
 // LoadPrivateKeyFromFile はファイルから秘密鍵を読み込みます
