@@ -16,16 +16,17 @@ import (
 
 // Client はCloudflare Auth Workerに接続するクライアント
 type Client struct {
-	baseURL      string
-	clientID     string
-	privateKey   *rsa.PrivateKey
-	httpClient   *http.Client
-	timeout      time.Duration
-	maxRetries   int
-	retryBackoff time.Duration
-	secretKeys   []string
-	repoUrl      string
-	grpcEndpoint string
+	baseURL         string
+	clientID        string
+	privateKey      *rsa.PrivateKey
+	httpClient      *http.Client
+	timeout         time.Duration
+	maxRetries      int
+	retryBackoff    time.Duration
+	secretKeys      []string
+	repoUrl         string
+	grpcEndpoint    string
+	includeRepoList bool
 }
 
 // NewClient は新しいクライアントを作成します
@@ -61,16 +62,17 @@ func NewClient(config ClientConfig) (*Client, error) {
 	}
 
 	return &Client{
-		baseURL:      strings.TrimSuffix(config.BaseURL, "/"),
-		clientID:     config.ClientID,
-		privateKey:   config.PrivateKey,
-		httpClient:   httpClient,
-		timeout:      timeout,
-		maxRetries:   0, // デフォルトはリトライなし
-		retryBackoff: 2 * time.Second,
-		secretKeys:   config.SecretKeys,
-		repoUrl:      config.RepoUrl,
-		grpcEndpoint: config.GrpcEndpoint,
+		baseURL:         strings.TrimSuffix(config.BaseURL, "/"),
+		clientID:        config.ClientID,
+		privateKey:      config.PrivateKey,
+		httpClient:      httpClient,
+		timeout:         timeout,
+		maxRetries:      0, // デフォルトはリトライなし
+		retryBackoff:    2 * time.Second,
+		secretKeys:      config.SecretKeys,
+		repoUrl:         config.RepoUrl,
+		grpcEndpoint:    config.GrpcEndpoint,
+		includeRepoList: config.IncludeRepoList,
 	}, nil
 }
 
@@ -211,11 +213,12 @@ func (c *Client) VerifySignature(challenge, signature string) (*VerifyResponse, 
 
 	// リクエストボディを作成
 	reqBody := VerifyRequest{
-		ClientID:     c.clientID,
-		Challenge:    challenge,
-		Signature:    signature,
-		RepoUrl:      c.repoUrl,
-		GrpcEndpoint: c.grpcEndpoint,
+		ClientID:        c.clientID,
+		Challenge:       challenge,
+		Signature:       signature,
+		RepoUrl:         c.repoUrl,
+		GrpcEndpoint:    c.grpcEndpoint,
+		IncludeRepoList: c.includeRepoList,
 	}
 
 	jsonData, err := json.Marshal(reqBody)

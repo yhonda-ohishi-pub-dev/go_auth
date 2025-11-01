@@ -25,9 +25,10 @@ func main() {
 		retryBackoff = flag.Duration("retry-backoff", 2*time.Second, "Retry backoff duration")
 		saveEnv      = flag.Bool("save-env", false, "Save secrets to .env file")
 		envFile      = flag.String("env-file", ".env", "Path to .env file")
-		secretKeys   = flag.String("secret-keys", "", "Comma-separated list of secret keys to retrieve (empty for all)")
-		repoUrl      = flag.String("repo-url", "", "GitHub repository URL (optional)")
-		grpcEndpoint = flag.String("grpc-endpoint", "", "gRPC endpoint URL (optional)")
+		secretKeys      = flag.String("secret-keys", "", "Comma-separated list of secret keys to retrieve (empty for all)")
+		repoUrl         = flag.String("repo-url", "", "GitHub repository URL (optional)")
+		grpcEndpoint    = flag.String("grpc-endpoint", "", "gRPC endpoint URL (optional)")
+		includeRepoList = flag.Bool("include-repo-list", false, "Include repository URL list in response")
 	)
 
 	flag.Parse()
@@ -116,12 +117,13 @@ func main() {
 
 	// クライアント作成
 	client, err := authclient.NewClient(authclient.ClientConfig{
-		BaseURL:      *baseURL,
-		ClientID:     *clientID,
-		PrivateKey:   privateKey,
-		SecretKeys:   secretKeyList,
-		RepoUrl:      *repoUrl,
-		GrpcEndpoint: *grpcEndpoint,
+		BaseURL:         *baseURL,
+		ClientID:        *clientID,
+		PrivateKey:      privateKey,
+		SecretKeys:      secretKeyList,
+		RepoUrl:         *repoUrl,
+		GrpcEndpoint:    *grpcEndpoint,
+		IncludeRepoList: *includeRepoList,
 	})
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
@@ -155,6 +157,14 @@ func main() {
 	fmt.Println("\nSecret Data:")
 	for key, value := range resp.SecretData {
 		fmt.Printf("  %s: %s\n", key, value)
+	}
+
+	// RepoListを表示
+	if len(resp.RepoList) > 0 {
+		fmt.Println("\nRepository List:")
+		for i, repo := range resp.RepoList {
+			fmt.Printf("  %d. %s\n", i+1, repo)
+		}
 	}
 
 	// .envファイルに保存

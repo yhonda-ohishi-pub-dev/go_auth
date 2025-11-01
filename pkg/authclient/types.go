@@ -31,6 +31,9 @@ type ClientConfig struct {
 
 	// GrpcEndpoint はgRPCエンドポイントのURL（オプション）
 	GrpcEndpoint string
+
+	// IncludeRepoList はリポジトリURLリストを取得するかどうか（オプション）
+	IncludeRepoList bool
 }
 
 // ChallengeResponse はチャレンジエンドポイントからのレスポンス
@@ -58,6 +61,9 @@ type VerifyRequest struct {
 
 	// GrpcEndpoint はgRPCエンドポイントのURL（オプション）
 	GrpcEndpoint string `json:"grpcEndpoint,omitempty"`
+
+	// IncludeRepoList はリポジトリURLリストを取得するかどうか（オプション）
+	IncludeRepoList bool `json:"includeRepoList,omitempty"`
 }
 
 // VerifyResponse は署名検証エンドポイントからのレスポンス
@@ -70,6 +76,9 @@ type VerifyResponse struct {
 
 	// SecretData はSecret変数のマップ
 	SecretData map[string]string `json:"secretData"`
+
+	// RepoList はリポジトリURLのリスト（includeRepoList=trueの場合のみ）
+	RepoList []string `json:"repoList,omitempty"`
 
 	// Error はエラーメッセージ（認証失敗時）
 	Error string `json:"error,omitempty"`
