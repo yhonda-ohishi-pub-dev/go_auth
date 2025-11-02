@@ -34,6 +34,9 @@ type ClientConfig struct {
 
 	// IncludeRepoList はリポジトリURLリストを取得するかどうか（オプション）
 	IncludeRepoList bool
+
+	// TunnelUrl はCloudflare TunnelのURL（オプション）
+	TunnelUrl string
 }
 
 // ChallengeResponse はチャレンジエンドポイントからのレスポンス
@@ -64,6 +67,9 @@ type VerifyRequest struct {
 
 	// IncludeRepoList はリポジトリURLリストを取得するかどうか（オプション）
 	IncludeRepoList bool `json:"includeRepoList,omitempty"`
+
+	// TunnelUrl はCloudflare TunnelのURL（オプション）
+	TunnelUrl string `json:"tunnelUrl,omitempty"`
 }
 
 // VerifyResponse は署名検証エンドポイントからのレスポンス

@@ -29,6 +29,7 @@ func main() {
 		repoUrl         = flag.String("repo-url", "", "GitHub repository URL (optional)")
 		grpcEndpoint    = flag.String("grpc-endpoint", "", "gRPC endpoint URL (optional)")
 		includeRepoList = flag.Bool("include-repo-list", false, "Include repository URL list in response")
+		tunnelUrl       = flag.String("tunnel-url", "", "Cloudflare Tunnel URL (optional)")
 	)
 
 	flag.Parse()
@@ -99,6 +100,9 @@ func main() {
 	if *grpcEndpoint != "" {
 		fmt.Printf("gRPC Endpoint: %s\n", *grpcEndpoint)
 	}
+	if *tunnelUrl != "" {
+		fmt.Printf("Tunnel URL: %s\n", *tunnelUrl)
+	}
 
 	// 秘密鍵を読み込み
 	privateKey, err := keygen.LoadPrivateKey(*privateFile)
@@ -124,6 +128,7 @@ func main() {
 		RepoUrl:         *repoUrl,
 		GrpcEndpoint:    *grpcEndpoint,
 		IncludeRepoList: *includeRepoList,
+		TunnelUrl:       *tunnelUrl,
 	})
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)

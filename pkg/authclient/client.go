@@ -27,6 +27,7 @@ type Client struct {
 	repoUrl         string
 	grpcEndpoint    string
 	includeRepoList bool
+	tunnelUrl       string
 }
 
 // NewClient は新しいクライアントを作成します
@@ -73,6 +74,7 @@ func NewClient(config ClientConfig) (*Client, error) {
 		repoUrl:         config.RepoUrl,
 		grpcEndpoint:    config.GrpcEndpoint,
 		includeRepoList: config.IncludeRepoList,
+		tunnelUrl:       config.TunnelUrl,
 	}, nil
 }
 
@@ -219,6 +221,7 @@ func (c *Client) VerifySignature(challenge, signature string) (*VerifyResponse, 
 		RepoUrl:         c.repoUrl,
 		GrpcEndpoint:    c.grpcEndpoint,
 		IncludeRepoList: c.includeRepoList,
+		TunnelUrl:       c.tunnelUrl,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
