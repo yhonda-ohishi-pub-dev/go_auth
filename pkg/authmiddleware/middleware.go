@@ -32,6 +32,12 @@ func NewTunnelAuthMiddleware(config Config) *TunnelAuthMiddleware {
 // Middleware はHTTPミドルウェアハンドラを返します
 func (m *TunnelAuthMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// CORSプリフライトリクエスト（OPTIONS）は認証をスキップ
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// ホワイトリストパスのチェック
 		if m.isWhitelisted(r.URL.Path) {
 			next.ServeHTTP(w, r)

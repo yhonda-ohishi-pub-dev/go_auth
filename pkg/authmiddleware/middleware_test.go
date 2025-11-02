@@ -13,6 +13,31 @@ func TestTunnelAuthMiddleware_Middleware(t *testing.T) {
 		w.Write([]byte("success"))
 	})
 
+	t.Run("OPTIONSリクエストは認証をスキップ", func(t *testing.T) {
+		config := Config{
+			GetAccessToken: func() string { return "test-token-123" },
+			WhitelistPaths: []string{},
+			RequireTunnel:  false,
+		}
+
+		middleware := NewTunnelAuthMiddleware(config)
+		handler := middleware.Middleware(testHandler)
+
+		// OPTIONSリクエストはAuthorizationヘッダーなしでも通過
+		req := httptest.NewRequest("OPTIONS", "/api/test", nil)
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+
+		if rec.Body.String() != "success" {
+			t.Errorf("Expected body 'success', got '%s'", rec.Body.String())
+		}
+	})
+
 	t.Run("認証成功", func(t *testing.T) {
 		config := Config{
 			GetAccessToken: func() string { return "test-token-123" },
