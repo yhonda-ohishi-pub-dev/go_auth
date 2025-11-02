@@ -120,9 +120,10 @@ func main() {
 
     // ミドルウェア設定
     middleware := authmiddleware.NewTunnelAuthMiddleware(authmiddleware.Config{
-        GetAccessToken: client.GetAccessToken,
-        WhitelistPaths: []string{"/health", "/public"},
-        RequireTunnel:  true, // Cloudflare Tunnel経由のみ許可
+        GetAccessToken:       client.GetAccessToken,
+        WhitelistPaths:       []string{"/health", "/public"},
+        RequireTunnel:        true,  // Cloudflare Tunnel経由のみ許可
+        SkipAuthForLocalhost: true,  // ローカル開発時は認証スキップ
     })
 
     // ハンドラ登録
@@ -325,11 +326,20 @@ HTTPミドルウェア機能
 
 **主要な型:**
 - `Config` - ミドルウェア設定
+  - `GetAccessToken` - アクセストークン取得関数
+  - `WhitelistPaths` - 認証スキップパスのリスト
+  - `RequireTunnel` - Cloudflare Tunnel必須フラグ
+  - `SkipAuthForLocalhost` - localhost認証スキップフラグ（ローカル開発用）
 - `TunnelAuthMiddleware` - 認証ミドルウェア
 
 **主要な関数:**
 - `NewTunnelAuthMiddleware(config Config) *TunnelAuthMiddleware` - ミドルウェア作成
 - `Middleware(next http.Handler) http.Handler` - HTTPミドルウェアハンドラ
+
+**セキュリティモデル:**
+- `RequireTunnel: true` + `SkipAuthForLocalhost: true` - 本番環境はTunnel必須、ローカル開発は認証不要
+- `RequireTunnel: true` + `SkipAuthForLocalhost: false` - Tunnel必須（最もセキュア）
+- `RequireTunnel: false` - Tunnel不要（開発専用、本番非推奨）
 
 ## セキュリティ
 

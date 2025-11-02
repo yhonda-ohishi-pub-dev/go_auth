@@ -15,6 +15,10 @@ type Config struct {
 
 	// RequireTunnel がtrueの場合、Cloudflare Tunnelからのリクエストのみ許可
 	RequireTunnel bool
+
+	// SkipAuthForLocalhost がtrueの場合、localhostからのリクエストは認証をスキップ
+	// ローカル開発環境で使用
+	SkipAuthForLocalhost bool
 }
 
 // TunnelAuthMiddleware はCloudflare Tunnel経由のBearer認証ミドルウェア
@@ -40,6 +44,12 @@ func (m *TunnelAuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 		// ホワイトリストパスのチェック
 		if m.isWhitelisted(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// localhostからのリクエストは認証をスキップ
+		if m.config.SkipAuthForLocalhost && m.isLocalhost(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -98,4 +108,17 @@ func (m *TunnelAuthMiddleware) isFromCloudflare(r *http.Request) bool {
 	// Cloudflare-Cdn-Loop ヘッダーの存在をチェック
 	cdnLoop := r.Header.Get("Cloudflare-Cdn-Loop")
 	return cdnLoop != ""
+}
+
+// isLocalhost はリクエストがlocalhostから来ているかチェックします
+func (m *TunnelAuthMiddleware) isLocalhost(r *http.Request) bool {
+	host := r.RemoteAddr
+	// ポート番号を除去
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	// IPv6のブラケットを除去
+	host = strings.Trim(host, "[]")
+
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }

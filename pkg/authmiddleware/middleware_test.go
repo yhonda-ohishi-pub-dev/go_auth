@@ -230,6 +230,75 @@ func TestTunnelAuthMiddleware_Middleware(t *testing.T) {
 			t.Errorf("Expected status 500, got %d", rec.Code)
 		}
 	})
+
+	t.Run("SkipAuthForLocalhost有効（localhostからのリクエスト）", func(t *testing.T) {
+		config := Config{
+			GetAccessToken:       func() string { return "test-token-123" },
+			WhitelistPaths:       []string{},
+			RequireTunnel:        true,
+			SkipAuthForLocalhost: true,
+		}
+
+		middleware := NewTunnelAuthMiddleware(config)
+		handler := middleware.Middleware(testHandler)
+
+		// localhostからのリクエストは認証不要
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.RemoteAddr = "127.0.0.1:12345"
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("SkipAuthForLocalhost有効（IPv6 localhostからのリクエスト）", func(t *testing.T) {
+		config := Config{
+			GetAccessToken:       func() string { return "test-token-123" },
+			WhitelistPaths:       []string{},
+			RequireTunnel:        true,
+			SkipAuthForLocalhost: true,
+		}
+
+		middleware := NewTunnelAuthMiddleware(config)
+		handler := middleware.Middleware(testHandler)
+
+		// ::1からのリクエストは認証不要
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.RemoteAddr = "[::1]:12345"
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("SkipAuthForLocalhost無効（localhostからでも認証必要）", func(t *testing.T) {
+		config := Config{
+			GetAccessToken:       func() string { return "test-token-123" },
+			WhitelistPaths:       []string{},
+			RequireTunnel:        false,
+			SkipAuthForLocalhost: false,
+		}
+
+		middleware := NewTunnelAuthMiddleware(config)
+		handler := middleware.Middleware(testHandler)
+
+		// SkipAuthForLocalhostがfalseなので認証が必要
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.RemoteAddr = "127.0.0.1:12345"
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
 }
 
 func TestTunnelAuthMiddleware_isWhitelisted(t *testing.T) {
