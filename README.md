@@ -89,6 +89,61 @@ client.SetRetry(3, 2*time.Second)
 resp, err := client.Authenticate()
 ```
 
+### 認証ミドルウェアの使用
+
+```go
+package main
+
+import (
+    "log"
+    "net/http"
+
+    "github.com/yhonda-ohishi-pub-dev/go_auth/pkg/authclient"
+    "github.com/yhonda-ohishi-pub-dev/go_auth/pkg/authmiddleware"
+)
+
+func main() {
+    // 認証クライアント作成
+    client, err := authclient.NewClientFromFile(
+        "https://your-worker.workers.dev",
+        "your-client-id",
+        "private.pem",
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 初回認証
+    if _, err := client.Authenticate(); err != nil {
+        log.Fatal(err)
+    }
+
+    // ミドルウェア設定
+    middleware := authmiddleware.NewTunnelAuthMiddleware(authmiddleware.Config{
+        GetAccessToken: client.GetAccessToken,
+        WhitelistPaths: []string{"/health", "/public"},
+        RequireTunnel:  true, // Cloudflare Tunnel経由のみ許可
+    })
+
+    // ハンドラ登録
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/data", func(w http.ResponseWriter, r *http.Request) {
+        w.Write([]byte("Protected data"))
+    })
+    mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+        w.Write([]byte("OK"))
+    })
+
+    // ミドルウェアを適用
+    handler := middleware.Middleware(mux)
+
+    log.Println("Server starting on :8080")
+    if err := http.ListenAndServe(":8080", handler); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
 ### 鍵生成APIの使用
 
 ```go
@@ -265,6 +320,17 @@ RSA鍵生成・管理機能
 - `LoadPrivateKey(filename string) (*rsa.PrivateKey, error)` - 秘密鍵読み込み
 - `LoadPublicKey(filename string) (*rsa.PublicKey, error)` - 公開鍵読み込み
 
+### pkg/authmiddleware
+HTTPミドルウェア機能
+
+**主要な型:**
+- `Config` - ミドルウェア設定
+- `TunnelAuthMiddleware` - 認証ミドルウェア
+
+**主要な関数:**
+- `NewTunnelAuthMiddleware(config Config) *TunnelAuthMiddleware` - ミドルウェア作成
+- `Middleware(next http.Handler) http.Handler` - HTTPミドルウェアハンドラ
+
 ## セキュリティ
 
 ### 暗号化仕様
@@ -313,10 +379,14 @@ go_auth/
 │   │   ├── auth.go              # 認証ロジック
 │   │   ├── types.go             # 型定義
 │   │   ├── errors.go            # エラー定義
+│   │   ├── env.go               # .env保存機能
 │   │   └── client_test.go       # テスト
-│   └── keygen/
-│       ├── keygen.go            # 鍵生成機能
-│       └── keygen_test.go       # テスト
+│   ├── keygen/
+│   │   ├── keygen.go            # 鍵生成機能
+│   │   └── keygen_test.go       # テスト
+│   └── authmiddleware/
+│       ├── middleware.go        # HTTPミドルウェア
+│       └── middleware_test.go   # テスト
 ├── internal/
 │   └── crypto/
 │       ├── rsa.go               # RSA署名処理
