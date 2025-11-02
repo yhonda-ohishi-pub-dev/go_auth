@@ -28,6 +28,7 @@ type Client struct {
 	grpcEndpoint    string
 	includeRepoList bool
 	tunnelUrl       string
+	accessToken     string // 認証後に保存されるアクセストークン
 }
 
 // NewClient は新しいクライアントを作成します
@@ -277,6 +278,11 @@ func (c *Client) VerifySignature(challenge, signature string) (*VerifyResponse, 
 		verifyResp.SecretData = filteredData
 	}
 
+	// アクセストークンを保存
+	if verifyResp.AccessToken != "" {
+		c.accessToken = verifyResp.AccessToken
+	}
+
 	return &verifyResp, nil
 }
 
@@ -332,4 +338,112 @@ func (c *Client) handleHTTPError(statusCode int, body []byte) error {
 	}
 
 	return NewHTTPError(statusCode, errResp.Error, baseErr)
+}
+
+// RegisterTunnel はトンネルURLを登録または更新します
+func (c *Client) RegisterTunnel(tunnelUrl string) (*TunnelRegisterResponse, error) {
+	if c.accessToken == "" {
+		return nil, fmt.Errorf("%w: accessToken is required, please authenticate first", ErrInvalidConfig)
+	}
+
+	url := fmt.Sprintf("%s/tunnel/register", c.baseURL)
+
+	reqBody := TunnelRegisterRequest{
+		ClientID:  c.clientID,
+		TunnelUrl: tunnelUrl,
+		Token:     c.accessToken,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrNetworkError, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.handleHTTPError(resp.StatusCode, body)
+	}
+
+	var tunnelResp TunnelRegisterResponse
+	if err := json.Unmarshal(body, &tunnelResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if !tunnelResp.Success {
+		return nil, fmt.Errorf("%w: %s", ErrUnauthorized, tunnelResp.Error)
+	}
+
+	// トンネルURLを更新
+	c.tunnelUrl = tunnelUrl
+
+	return &tunnelResp, nil
+}
+
+// GetTunnel はトンネル情報を取得します
+func (c *Client) GetTunnel() (*TunnelGetResponse, error) {
+	if c.accessToken == "" {
+		return nil, fmt.Errorf("%w: accessToken is required, please authenticate first", ErrInvalidConfig)
+	}
+
+	url := fmt.Sprintf("%s/tunnel/%s", c.baseURL, c.clientID)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.accessToken))
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrNetworkError, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.handleHTTPError(resp.StatusCode, body)
+	}
+
+	var tunnelResp TunnelGetResponse
+	if err := json.Unmarshal(body, &tunnelResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if !tunnelResp.Success {
+		return nil, fmt.Errorf("%w: %s", ErrUnauthorized, tunnelResp.Error)
+	}
+
+	return &tunnelResp, nil
+}
+
+// GetAccessToken はアクセストークンを返します
+func (c *Client) GetAccessToken() string {
+	return c.accessToken
+}
+
+// SetAccessToken はアクセストークンを設定します
+func (c *Client) SetAccessToken(token string) {
+	c.accessToken = token
 }

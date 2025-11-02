@@ -77,8 +77,11 @@ type VerifyResponse struct {
 	// Success は認証成功フラグ
 	Success bool `json:"success"`
 
-	// Token はJWTトークン
+	// Token はJWTトークン（後方互換性のため残存）
 	Token string `json:"token"`
+
+	// AccessToken はBase64エンコードされた認証トークン
+	AccessToken string `json:"accessToken"`
 
 	// SecretData はSecret変数のマップ
 	SecretData map[string]string `json:"secretData"`
@@ -103,4 +106,58 @@ type ErrorResponse struct {
 type HealthResponse struct {
 	// Status はステータス（通常 "ok"）
 	Status string `json:"status"`
+}
+
+// TunnelRegisterRequest はトンネル登録リクエスト
+type TunnelRegisterRequest struct {
+	// ClientID はクライアント識別子
+	ClientID string `json:"clientId"`
+
+	// TunnelUrl はトンネルURL
+	TunnelUrl string `json:"tunnelUrl"`
+
+	// Token はアクセストークン
+	Token string `json:"token"`
+}
+
+// TunnelData はトンネル情報
+type TunnelData struct {
+	// ClientID はクライアント識別子
+	ClientID string `json:"clientId"`
+
+	// TunnelUrl はトンネルURL
+	TunnelUrl string `json:"tunnelUrl"`
+
+	// Token はアクセストークン
+	Token string `json:"token"`
+
+	// UpdatedAt は更新日時（Unix時間ミリ秒）
+	UpdatedAt int64 `json:"updatedAt"`
+
+	// CreatedAt は作成日時（Unix時間ミリ秒）
+	CreatedAt int64 `json:"createdAt"`
+}
+
+// TunnelRegisterResponse はトンネル登録レスポンス
+type TunnelRegisterResponse struct {
+	// Success は成功フラグ
+	Success bool `json:"success"`
+
+	// Data はトンネル情報
+	Data TunnelData `json:"data"`
+
+	// Error はエラーメッセージ
+	Error string `json:"error,omitempty"`
+}
+
+// TunnelGetResponse はトンネル取得レスポンス
+type TunnelGetResponse struct {
+	// Success は成功フラグ
+	Success bool `json:"success"`
+
+	// Data はトンネル情報
+	Data TunnelData `json:"data"`
+
+	// Error はエラーメッセージ
+	Error string `json:"error,omitempty"`
 }
